@@ -98,7 +98,9 @@
 			    for (i; i < dataLength; i += 1) {
 			    	var d = data[i][0].toString();
 			    	var timeStamp = new Date(d.slice(0, 4) + "/" + d.slice(4, 6) + "/" + d.slice(6, 8) + " " + d.slice(8, 10) + ":" + d.slice(10, 12) + ":" + d.slice(12, 14));
+			    	console.log('timeStamp:'+timeStamp+'\n');
 			    	timeStamp = timeStamp.getTime()
+			    	console.log('timeStamp:'+timeStamp+'\n');
 
 			        ohlc.push([
 			            timeStamp, // the date

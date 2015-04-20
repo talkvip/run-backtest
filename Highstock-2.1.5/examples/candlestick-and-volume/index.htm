@@ -42,7 +42,6 @@ $(function () {
             ]);
         }
 
-
         // create the chart
         $('#container').highcharts('StockChart', {
 
@@ -64,16 +63,13 @@ $(function () {
                 },
                 height: '60%',
                 lineWidth: 2
-            }, {
-                labels: {
-                    align: 'right',
-                    x: -3
-                },
+            },{
+                opposite: !1,
                 title: {
-                    text: 'Volume'
+                    text: "交易量"
                 },
-                top: '65%',
-                height: '35%',
+                top: 216,
+                height: 50,
                 offset: 0,
                 lineWidth: 2
             }],

@@ -10,6 +10,8 @@
       <!-- <script type="text/javascript" src="bootstrap.js"></script> -->
       <script type="text/javascript" src="moment.js"></script>
       <script type="text/javascript" src="daterangepicker.js"></script>
+      <script type="text/javascript" src="highstock.js"></script>
+      <script type="text/javascript" src="highcharts-more.js"></script>
    </head>
    <body>
 
@@ -18,17 +20,324 @@
         <div class="controls">
             <div class="input-prepend">
                 <span class="add-on">开始到结束</span>
-                <input class="span6" name="daterange" id="prependedInput" type="text" placeholder="选择时间范围">
+                <input class="span6" name="daterange" id="daterangeInput" type="text" placeholder="选择时间范围">
             </div>
+            <select id="period" class="form-control">
+		        <option value="0" selected="selected" label="1分钟">1分钟</option>
+		        <option value="1" label="5分钟">5分钟</option>
+		        <option value="2" label="15分钟">15分钟</option>
+		        <option value="3" label="30分钟">30分钟</option>
+		        <option value="4" label="1小时">1小时</option>
+		        <option value="5" label="1天">1天</option>
+            </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="Name" >平台</label>
+        <div class="controls">
+            <select id="platform" class="form-control">
+	            <option value="0" selected="selected" label="火币网">火币网</option>
+	            <option value="1" label="OKCoin">OKCoin</option>
+<!-- 	            <option value="2" label="BTCChina">BTCChina</option>
+<option value="3" label="云币网">云币网</option>
+<option value="4" label="中国比特币">中国比特币</option>
+<option value="5" label="比特币交易网">比特币交易网</option>
+<option value="6" label="BTC100">BTC100</option>
+<option value="7" label="BitVC">BitVC</option>
+<option value="8" label="796期货">796期货</option>
+<option value="9" label="BitVC期货">BitVC期货</option>
+<option value="10" label="OKCoin期货">OKCoin期货</option>
+<option value="11" label="BTC-E">BTC-E</option>
+<option value="12" label="Bitstamp">Bitstamp</option>
+<option value="13" label="Bitfinex">Bitfinex</option>
+<option value="14" label="OKCoin国际站">OKCoin国际站</option> -->
+            </select>
+            <select id="coin" class="form-control">
+	            <option value="0" selected="selected" label="BTC">BTC</option>
+	            <option value="1" label="LTC">LTC</option>
+            </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <button class="btn btn-primary btn-lg btn-xl" onclick="runBacktest(this)">开始回测</button>
+        </div>
+    </div>
+        <div class="control-group">
+        <label class="control-label" for="Name" >回测日志</label>
+        <div class="controls">
+			<div id="container" style="height: 400px; min-width: 310px"></div>
         </div>
     </div>
 
    </body>
    <script type="text/javascript">
+   function runBacktest(btn){
+		var tstBtn = $(btn);
+		var stopBtn = tstBtn.next();
+		tstBtn.attr("disabled",true);
+		tstBtn.html("回测中...");
+		$.get(fetchURL(),function(data,status){
+			if(data){
+				alert(data);
+				// split the data set into ohlc and volume
+			    var ohlc = [],
+			        volume = [],
+			        dataLength = data.length,
+			        // set the allowed units for data grouping
+			        groupingUnits = [[
+			            'week',                         // unit name
+			            [1]                             // allowed multiples
+			        ], [
+			            'month',
+			            [1, 2, 3, 4, 6]
+			        ]],
+
+			        i = 0;
+
+			    for (i; i < dataLength; i += 1) {
+			    	var d = data[i][0].toString();
+			    	var timeStamp = new Date(d.slice(0, 4) + "/" + d.slice(4, 6) + "/" + d.slice(6, 8) + " " + d.slice(8, 10) + ":" + d.slice(10, 12) + ":" + d.slice(12, 14));
+			    	timeStamp = timeStamp.getTime()
+
+			        ohlc.push([
+			            timeStamp, // the date
+			            data[i][1], // open
+			            data[i][2], // high
+			            data[i][3], // low
+			            data[i][4] // close
+			        ]);
+
+			        volume.push([
+			            timeStamp, // the date
+			            data[i][5] // the volume
+			        ]);
+			    }
+
+/*			    // create the chart
+			    $('#container').highcharts('StockChart', {
+
+			        rangeSelector: {
+			            selected: 1
+			        },
+
+			        title: {
+			            text: 'AAPL Historical'
+			        },
+
+			        tooltip: {
+                        xDateFormat: "%Y-%m-%d %H:%M:%S",
+                        color: "#f0f",
+                        changeDecimals: 4,
+                        borderColor: "#058dc7",
+                        crosshairs: !1,
+                        shared: !1,
+                        snap: 1
+                    },
+
+			        yAxis: [{
+			            labels: {
+			                align: 'right',
+			                x: -3
+			            },
+			            title: {
+			                text: 'OHLC'
+			            },
+			            height: '60%',
+			            lineWidth: 2
+			        },{
+			            opposite: !1,
+			            title: {
+			                text: "交易量"
+			            },
+			            top: 216,
+			            height: 50,
+			            offset: 0,
+			            lineWidth: 2
+			        }],
+
+			        series: [{
+			            type: 'candlestick',
+			            name: 'AAPL',
+			            data: ohlc,
+			            dataGrouping: {
+			                units: groupingUnits
+			            }
+			        }, {
+			            type: 'column',
+			            name: 'Volume',
+			            data: volume,
+			            yAxis: 1,
+			            dataGrouping: {
+			                units: groupingUnits
+			            }
+			        }]
+			    });*/
+
+				var r = '火币网';
+                newKChart("container", r, 1, [{
+                    type: "candlestick",
+                    id: "primary",
+                    name: r,
+                    data: ohlc,
+                    yAxis: 0
+                }, {
+                    type: "flags",
+                    shape: "circlepin",
+                    onSeries: "primary",
+                    data: 1
+                }, {
+                    type: "trendline",
+                    lineWidth: 1,
+                    name: "EMA(7)",
+                    linkedTo: "primary",
+                    showInLegend: !0,
+                    algorithm: "EMA",
+                    periods: 7
+                }, {
+                    type: "trendline",
+                    lineWidth: 1,
+                    name: "EMA(30)",
+                    linkedTo: "primary",
+                    showInLegend: !0,
+                    algorithm: "EMA",
+                    periods: 30
+                }, {
+                    type: "column",
+                    name: "Volume",
+                    data: volume,
+                    yAxis: 1
+                }, {
+                    name: "MACD(12,26,9)",
+                    lineWidth: 1,
+                    linkedTo: "primary",
+                    yAxis: 2,
+                    showInLegend: !0,
+                    type: "trendline",
+                    algorithm: "MACD"
+                }, {
+                    name: "Signal line",
+                    lineWidth: 1,
+                    linkedTo: "primary",
+                    yAxis: 2,
+                    showInLegend: !0,
+                    type: "trendline",
+                    algorithm: "signalLine"
+                }, {
+                    name: "Histogram",
+                    lineWidth: 1,
+                    linkedTo: "primary",
+                    yAxis: 2,
+                    showInLegend: !0,
+                    type: "histogram"
+                }]);
+
+				tstBtn.attr("disabled",false);
+				tstBtn.html("开始回测");
+			}else{
+				alert(data.msg);
+				tstBtn.attr("disabled",false);
+		}
+	  });
+	}
+	//c.replace(/[\-\/\s:]/g, "") + "/" + d.replace(/[\-\/\s:]/g, "")
+	function fetchURL(){
+		var dateArr = $('#daterangeInput').val().split(' -> '),
+			periodType = $('#period option:selected').val(),
+			platformType = $('#platform option:selected').val(),
+			coinType = $('#coin option:selected').attr('label');
+		var tickerUrl = "https://getticker.sinaapp.com/fetch/" + platformType + "/" + coinType.toLowerCase() + "/" + periodType + "/" + dateArr[0].replace(/[\-\/\s:]/g, "") + "/" + dateArr[1].replace(/[\-\/\s:]/g, "") + "/kline.json";
+		console.log('tickerUrl:'+tickerUrl);
+		return tickerUrl;
+	}
+    //b：平台name c：时间段
+    function newKChart(a, b, c, d) {
+        try {
+            var e = 0,
+                f = 3,
+                g = [{
+                    type: "hour",
+                    count: 1,
+                    text: "1h"
+                }, {
+                    type: "hour",
+                    count: 3,
+                    text: "3h"
+                }, {
+                    type: "hour",
+                    count: 8,
+                    text: "8h"
+                }, {
+                    type: "all",
+                    text: "All"
+                }],
+                h = 0;
+            c == e ? h = 0 : c > e && f > c ? h = 1 : c == f ? h = 2 : c > f && (h = 3), new Highcharts.StockChart({
+                chart: {
+                    renderTo: a,
+                    backgroundColor: "#fafafa"
+                },
+                plotOptions: {
+                    series: {
+                        turboThreshold: 0
+                    },
+                    candlestick: {
+                        color: "#d33",
+                        upColor: "#9e4"
+                    }
+                },
+                tooltip: {
+                    xDateFormat: "%Y-%m-%d %H:%M:%S",
+                    color: "#f0f",
+                    changeDecimals: 4,
+                    borderColor: "#058dc7",
+                    crosshairs: !1,
+                    shared: !1,
+                    snap: 1
+                },
+                rangeSelector: {
+                    buttons: g,
+                    selected: h,
+                    inputEnabled: !1
+                },
+                yAxis: [{
+                    opposite: !1,
+                    title: {
+                        text: b
+                    },
+                    top: 11,
+                    height: 200,
+                    lineWidth: 2,
+                    gridLineDashStyle: "ShortDot"
+                }, {
+                    opposite: !1,
+                    title: {
+                        text: "交易量"
+                    },
+                    top: 216,
+                    height: 50,
+                    offset: 0,
+                    lineWidth: 2
+                }, {
+                    opposite: !1,
+                    title: {
+                        text: "MACD(16,26,9)"
+                    },
+                    top: 271,
+                    height: 110,
+                    offset: 0,
+                    lineWidth: 2
+                }],
+                series: d
+            })
+        } catch (i) {
+            console.log(i)
+        }
+    }
    $(document).ready(function() {
      $('input[name="daterange"]').daterangepicker({
        timePicker: true,
-       format: 'YYYY/MM/DD HH:mm',
+       format: 'YYYY/MM/DD HH:mm:ss',
        startDate: moment().subtract(1, 'hours'),
        endDate: moment(),
        timePickerIncrement: 15,
@@ -52,5 +361,112 @@
              }
      });
    });
+   ! function(a) {
+        function b(a, b) {
+            var c, e, f = 9,
+                g = [],
+                h = [],
+                i = [],
+                j = [],
+                k = [];
+            c = d(a, b, 12), e = d(a, b, 26);
+            for (var l = 0; l < c.length; l++) g.push(null == e[l][1] ? [a[l], null] : [a[l], c[l][1] - e[l][1]]);
+            for (var l = 0; l < g.length; l++) h.push(g[l][0]), i.push(g[l][1]);
+            j = d(h, i, f);
+            for (var l = 0; l < g.length; l++) k.push(null == g[l][1] ? [g[l][0], null] : [g[l][0], g[l][1] - j[l][1]]);
+            return [g, j, k]
+        }
+
+        function c(a, b) {
+            var c, d = [],
+                e = 0,
+                f = 0,
+                g = 0,
+                h = 0,
+                i = 0,
+                j = 0,
+                k = 0,
+                l = 0,
+                m = 0,
+                n = 0,
+                o = 0;
+            c = a.length;
+            for (var p = 0; c > p; p++) e += a[p] * b[p], g += a[p], h += b[p], i += Math.pow(a[p], 2), k += a[p], m += b[p];
+            return e = c * e, f = g * h, i = c * i, j = Math.pow(k, 2), l = (e - f) / (i - j), n = l * k, o = (m - n) / c, d.push([a[0], b[0]]), step10 = l * a[c - 1] + o, d.push([a[c - 1], step10]), d
+        }
+
+        function d(a, b, c) {
+            for (var d, e, g = !1, h = c, i = 2 / (h + 1), j = [], k = [], l = b.length, m = (a[0], 0); l > m; m++) b[m - 1] && k.push(b[m]), h == k.length ? (d = b[m], g ? (e = d * i + g * (1 - i), g = e) : g = f(k), j.push([a[m], g]), k.splice(0, 1)) : j.push([a[m], null]);
+            return j
+        }
+
+        function e(a, b, c) {
+            for (var d = [], e = [], g = b.length, h = (a[0], 0); g > h; h++) d.push(b[h]), c == d.length ? (e.push([a[h], f(d)]), d.splice(0, 1)) : e.push([a[h], null]);
+            return e
+        }
+
+        function f(a) {
+            for (var b = 0, c = a.length, d = c; d--;) b += a[d];
+            return b / c
+        }
+        var g = a.getOptions(),
+            h = g.plotOptions,
+            i = a.seriesTypes;
+        h.trendline = a.merge(h.line, {
+            marker: {
+                enabled: !1
+            },
+            tooltip: {
+                valueDecimals: 2
+            }
+        }), i.trendline = a.extendClass(i.line, {
+            type: "trendline",
+            animate: null,
+            requiresSorting: !1,
+            processData: function() {
+                var b;
+                this.linkedParent && (b = [].concat(this.linkedParent.options.data), this.setData(this.runAlgorithm(), !1)), a.Series.prototype.processData.call(this)
+            },
+            runAlgorithm: function() {
+                for (var a = [], b = this.linkedParent.xData, c = this.options.periods || 100, d = this.options.algorithm || "linear", e = 0; e < this.linkedParent.yData.length; e++) a[e] = this.linkedParent.yData[e][3];
+                return this[d](b, a, c)
+            },
+            MACD: function(a, c, d) {
+                return b(a, c, d)[0]
+            },
+            signalLine: function(a, c, d) {
+                return b(a, c, d)[1]
+            },
+            SMA: function(a, b, c) {
+                return e(a, b, c)
+            },
+            EMA: function(a, b, c) {
+                return d(a, b, c)
+            },
+            linear: function(a, b, d) {
+                return c(a, b, d)
+            }
+        }), h.histogram = a.merge(h.column, {
+            borderWidth: 0,
+            tooltip: {
+                valueDecimals: 2
+            }
+        }), i.histogram = a.extendClass(i.column, {
+            type: "histogram",
+            animate: null,
+            requiresSorting: !1,
+            processData: function() {
+                var b;
+                this.linkedParent && (b = [].concat(this.linkedParent.options.data), this.setData(this.runAlgorithm(), !1)), a.Series.prototype.processData.call(this)
+            },
+            runAlgorithm: function() {
+                for (var a = [], b = this.linkedParent.xData, c = this.options.periods || 100, d = this.options.algorithm || "histogram", e = 0; e < this.linkedParent.yData.length; e++) a[e] = this.linkedParent.yData[e][3];
+                return this[d](b, a, c)
+            },
+            histogram: function(a, c, d) {
+                return b(a, c, d)[2]
+            }
+        })
+    }(Highcharts);
    </script>
 </html>

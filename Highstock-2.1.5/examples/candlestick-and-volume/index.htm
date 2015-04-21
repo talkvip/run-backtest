@@ -28,7 +28,7 @@ $(function () {
             i = 0;
 
         for (i; i < dataLength; i += 1) {
-            console.log(data[i][0]);
+            console.log(typeof(data[i][0])+":"+data[i][0]);
             ohlc.push([
                 data[i][0], // the date
                 data[i][1], // open
@@ -101,6 +101,6 @@ $(function () {
 <script src="../../js/modules/exporting.js"></script>
 
 
-<div id="container" style="height: 400px; min-width: 310px"></div>
+<div id="container" style="height: 500px; min-width: 310px"></div>
 	</body>
 </html>

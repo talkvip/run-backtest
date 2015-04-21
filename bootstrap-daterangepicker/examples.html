@@ -24,11 +24,11 @@
             </div>
             <select id="period" class="form-control">
 		        <option value="0" selected="selected" label="1分钟">1分钟</option>
-		        <option value="1" label="5分钟">5分钟</option>
-		        <option value="2" label="15分钟">15分钟</option>
-		        <option value="3" label="30分钟">30分钟</option>
-		        <option value="4" label="1小时">1小时</option>
-		        <option value="5" label="1天">1天</option>
+		        <option value="2" label="5分钟">5分钟</option>
+		        <option value="3" label="15分钟">15分钟</option>
+		        <option value="4" label="30分钟">30分钟</option>
+		        <option value="5" label="1小时">1小时</option>
+		        <option value="10" label="1天">1天</option>
             </select>
         </div>
     </div>
@@ -60,7 +60,7 @@
     </div>
     <div class="control-group">
         <div class="controls">
-            <button class="btn btn-primary btn-lg btn-xl" onclick="runBacktest(this)">开始回测</button>
+            <button class="btn btn-primary btn-lg btn-xl" onclick="javascript:runBacktest(this)">开始回测</button>
         </div>
     </div>
         <div class="control-group">
@@ -72,298 +72,7 @@
 
    </body>
    <script type="text/javascript">
-   function runBacktest(btn){
-		var tstBtn = $(btn);
-		var stopBtn = tstBtn.next();
-		tstBtn.attr("disabled",true);
-		tstBtn.html("回测中...");
-		$.get(fetchURL(),function(data,status){
-			if(data){
-				alert(data);
-				// split the data set into ohlc and volume
-			    var ohlc = [],
-			        volume = [],
-			        dataLength = data.length,
-			        // set the allowed units for data grouping
-			        groupingUnits = [[
-			            'week',                         // unit name
-			            [1]                             // allowed multiples
-			        ], [
-			            'month',
-			            [1, 2, 3, 4, 6]
-			        ]],
-
-			        i = 0;
-
-			    for (i; i < dataLength; i += 1) {
-			    	var d = data[i][0].toString();
-			    	var timeStamp = new Date(d.slice(0, 4) + "/" + d.slice(4, 6) + "/" + d.slice(6, 8) + " " + d.slice(8, 10) + ":" + d.slice(10, 12) + ":" + d.slice(12, 14));
-			    	console.log('timeStamp:'+timeStamp+'\n');
-			    	timeStamp = timeStamp.getTime()
-			    	console.log('timeStamp:'+timeStamp+'\n');
-
-			        ohlc.push([
-			            timeStamp, // the date
-			            data[i][1], // open
-			            data[i][2], // high
-			            data[i][3], // low
-			            data[i][4] // close
-			        ]);
-
-			        volume.push([
-			            timeStamp, // the date
-			            data[i][5] // the volume
-			        ]);
-			    }
-
-/*			    // create the chart
-			    $('#container').highcharts('StockChart', {
-
-			        rangeSelector: {
-			            selected: 1
-			        },
-
-			        title: {
-			            text: 'AAPL Historical'
-			        },
-
-			        tooltip: {
-                        xDateFormat: "%Y-%m-%d %H:%M:%S",
-                        color: "#f0f",
-                        changeDecimals: 4,
-                        borderColor: "#058dc7",
-                        crosshairs: !1,
-                        shared: !1,
-                        snap: 1
-                    },
-
-			        yAxis: [{
-			            labels: {
-			                align: 'right',
-			                x: -3
-			            },
-			            title: {
-			                text: 'OHLC'
-			            },
-			            height: '60%',
-			            lineWidth: 2
-			        },{
-			            opposite: !1,
-			            title: {
-			                text: "交易量"
-			            },
-			            top: 216,
-			            height: 50,
-			            offset: 0,
-			            lineWidth: 2
-			        }],
-
-			        series: [{
-			            type: 'candlestick',
-			            name: 'AAPL',
-			            data: ohlc,
-			            dataGrouping: {
-			                units: groupingUnits
-			            }
-			        }, {
-			            type: 'column',
-			            name: 'Volume',
-			            data: volume,
-			            yAxis: 1,
-			            dataGrouping: {
-			                units: groupingUnits
-			            }
-			        }]
-			    });*/
-
-				var r = '火币网';
-                newKChart("container", r, 1, [{
-                    type: "candlestick",
-                    id: "primary",
-                    name: r,
-                    data: ohlc,
-                    yAxis: 0
-                }, {
-                    type: "flags",
-                    shape: "circlepin",
-                    onSeries: "primary",
-                    data: 1
-                }, {
-                    type: "trendline",
-                    lineWidth: 1,
-                    name: "EMA(7)",
-                    linkedTo: "primary",
-                    showInLegend: !0,
-                    algorithm: "EMA",
-                    periods: 7
-                }, {
-                    type: "trendline",
-                    lineWidth: 1,
-                    name: "EMA(30)",
-                    linkedTo: "primary",
-                    showInLegend: !0,
-                    algorithm: "EMA",
-                    periods: 30
-                }, {
-                    type: "column",
-                    name: "Volume",
-                    data: volume,
-                    yAxis: 1
-                }, {
-                    name: "MACD(12,26,9)",
-                    lineWidth: 1,
-                    linkedTo: "primary",
-                    yAxis: 2,
-                    showInLegend: !0,
-                    type: "trendline",
-                    algorithm: "MACD"
-                }, {
-                    name: "Signal line",
-                    lineWidth: 1,
-                    linkedTo: "primary",
-                    yAxis: 2,
-                    showInLegend: !0,
-                    type: "trendline",
-                    algorithm: "signalLine"
-                }, {
-                    name: "Histogram",
-                    lineWidth: 1,
-                    linkedTo: "primary",
-                    yAxis: 2,
-                    showInLegend: !0,
-                    type: "histogram"
-                }]);
-
-				tstBtn.attr("disabled",false);
-				tstBtn.html("开始回测");
-			}else{
-				alert(data.msg);
-				tstBtn.attr("disabled",false);
-		}
-	  });
-	}
-	//c.replace(/[\-\/\s:]/g, "") + "/" + d.replace(/[\-\/\s:]/g, "")
-	function fetchURL(){
-		var dateArr = $('#daterangeInput').val().split(' -> '),
-			periodType = $('#period option:selected').val(),
-			platformType = $('#platform option:selected').val(),
-			coinType = $('#coin option:selected').attr('label');
-		var tickerUrl = "https://getticker.sinaapp.com/fetch/" + platformType + "/" + coinType.toLowerCase() + "/" + periodType + "/" + dateArr[0].replace(/[\-\/\s:]/g, "") + "/" + dateArr[1].replace(/[\-\/\s:]/g, "") + "/kline.json";
-		console.log('tickerUrl:'+tickerUrl);
-		return tickerUrl;
-	}
-    //b：平台name c：时间段
-    function newKChart(a, b, c, d) {
-        try {
-            var e = 0,
-                f = 3,
-                g = [{
-                    type: "hour",
-                    count: 1,
-                    text: "1h"
-                }, {
-                    type: "hour",
-                    count: 3,
-                    text: "3h"
-                }, {
-                    type: "hour",
-                    count: 8,
-                    text: "8h"
-                }, {
-                    type: "all",
-                    text: "All"
-                }],
-                h = 0;
-            c == e ? h = 0 : c > e && f > c ? h = 1 : c == f ? h = 2 : c > f && (h = 3), new Highcharts.StockChart({
-                chart: {
-                    renderTo: a,
-                    backgroundColor: "#fafafa"
-                },
-                plotOptions: {
-                    series: {
-                        turboThreshold: 0
-                    },
-                    candlestick: {
-                        color: "#d33",
-                        upColor: "#9e4"
-                    }
-                },
-                tooltip: {
-                    xDateFormat: "%Y-%m-%d %H:%M:%S",
-                    color: "#f0f",
-                    changeDecimals: 4,
-                    borderColor: "#058dc7",
-                    crosshairs: !1,
-                    shared: !1,
-                    snap: 1
-                },
-                rangeSelector: {
-                    buttons: g,
-                    selected: h,
-                    inputEnabled: !1
-                },
-                yAxis: [{
-                    opposite: !1,
-                    title: {
-                        text: b
-                    },
-                    top: 11,
-                    height: 200,
-                    lineWidth: 2,
-                    gridLineDashStyle: "ShortDot"
-                }, {
-                    opposite: !1,
-                    title: {
-                        text: "交易量"
-                    },
-                    top: 216,
-                    height: 50,
-                    offset: 0,
-                    lineWidth: 2
-                }, {
-                    opposite: !1,
-                    title: {
-                        text: "MACD(16,26,9)"
-                    },
-                    top: 271,
-                    height: 110,
-                    offset: 0,
-                    lineWidth: 2
-                }],
-                series: d
-            })
-        } catch (i) {
-            console.log(i)
-        }
-    }
-   $(document).ready(function() {
-     $('input[name="daterange"]').daterangepicker({
-       timePicker: true,
-       format: 'YYYY/MM/DD HH:mm:ss',
-       startDate: moment().subtract(1, 'hours'),
-       endDate: moment(),
-       timePickerIncrement: 15,
-       timePicker12Hour: false,
-       timePickerSeconds: true,
-       dateLimit: { days: 60 },
-       showDropdowns: true,
-       showWeekNumbers: false,
-       separator: ' -> ',
-       opens: 'right',
-       drops: 'down',
-       locale:{
-               applyLabel: '提交',
-               cancelLabel: '取消',
-               fromLabel: '从时间',
-               toLabel: '到时间',
-               customRangeLabel: 'Custom',
-               daysOfWeek: ['日', '一', '二', '三', '四', '五','六'],
-               monthNames: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
-               firstDay: 1
-             }
-     });
-   });
-   ! function(a) {
+   	   (function(a) {
         function b(a, b) {
             var c, e, f = 9,
                 g = [],
@@ -469,6 +178,259 @@
                 return b(a, c, d)[2]
             }
         })
-    }(Highcharts);
+    })(Highcharts);
+   </script>
+   <script type="text/javascript">
+
+   $(document).ready(function() {
+   	 var daterangeInput = $('input[name="daterange"]');
+   	 daterangeInput.val(moment().subtract(1, 'days').format('YYYY/MM/DD HH:mm:ss') + ' -> ' + moment().format('YYYY/MM/DD HH:mm:ss'));
+     daterangeInput.daterangepicker({
+       timePicker: true,
+       format: 'YYYY/MM/DD HH:mm:ss',
+       startDate: moment().subtract(1, 'days'),
+       endDate: moment(),
+       timePickerIncrement: 15,
+       timePicker12Hour: false,
+       timePickerSeconds: true,
+       dateLimit: { days: 60 },
+       showDropdowns: true,
+       showWeekNumbers: false,
+       separator: ' -> ',
+       opens: 'right',
+       drops: 'down',
+       locale:{
+               applyLabel: '提交',
+               cancelLabel: '取消',
+               fromLabel: '从时间',
+               toLabel: '到时间',
+               customRangeLabel: 'Custom',
+               daysOfWeek: ['日', '一', '二', '三', '四', '五','六'],
+               monthNames: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+               firstDay: 1
+             }
+     });
+   });
+
+   function runBacktest(btn){
+		var tstBtn = $(btn),
+			stopBtn = tstBtn.next(),
+			dateArr = $('#daterangeInput').val().split(' -> '),
+			periodType = $('#period option:selected').val(),
+			platformType = $('#platform option:selected').val(),
+			coinType = $('#coin option:selected').attr('label'),
+			series = {};
+
+		tstBtn.attr("disabled",true);
+		tstBtn.html("回测中...");
+
+		
+
+	    // create the chart
+		var type = platformType+'_'+coinType;
+		series[type] = fetchRecords(fetchURL(dateArr,periodType,platformType,coinType),periodType,platformType,coinType);
+        newKChart("container", type, series[type].period, [{
+            type: "candlestick",
+            id: "primary",
+            name: r,
+            data: series[type].ohlc,
+            yAxis: 0
+        }, {
+            type: "flags",
+            shape: "circlepin",
+            onSeries: "primary",
+            data: series[type].period
+        }, {
+            type: "trendline",
+            lineWidth: 1,
+            name: "EMA(7)",
+            linkedTo: "primary",
+            showInLegend: !0,
+            algorithm: "EMA",
+            periods: 7
+        }, {
+            type: "trendline",
+            lineWidth: 1,
+            name: "EMA(30)",
+            linkedTo: "primary",
+            showInLegend: !0,
+            algorithm: "EMA",
+            periods: 30
+        }, {
+            type: "column",
+            name: "Volume",
+            data: series[type].volume,
+            yAxis: 1
+        }, {
+            name: "MACD(12,26,9)",
+            lineWidth: 1,
+            linkedTo: "primary",
+            yAxis: 2,
+            showInLegend: !0,
+            type: "trendline",
+            algorithm: "MACD"
+        }, {
+            name: "Signal line",
+            lineWidth: 1,
+            linkedTo: "primary",
+            yAxis: 2,
+            showInLegend: !0,
+            type: "trendline",
+            algorithm: "signalLine"
+        }, {
+            name: "Histogram",
+            lineWidth: 1,
+            linkedTo: "primary",
+            yAxis: 2,
+            showInLegend: !0,
+            type: "histogram"
+        }]);
+
+		tstBtn.attr("disabled",false);
+		tstBtn.html("开始回测");
+	}
+
+	 //b：平台name c：时间段 d:series
+    function newKChart(a, b, c, d) {
+    	Highcharts.setOptions({
+            global: {
+                useUTC: !1
+            },
+            lang: {
+                numericSymbols: ["k", "M", "G", "T", "P", "E"]
+            },
+            credits: {
+                enabled: !1
+            }
+        });
+        try {
+            var e = 0,
+                f = 3,
+                g = [{
+                    type: "hour",
+                    count: 1,
+                    text: "1h"
+                }, {
+                    type: "hour",
+                    count: 3,
+                    text: "3h"
+                }, {
+                    type: "hour",
+                    count: 8,
+                    text: "8h"
+                }, {
+                    type: "all",
+                    text: "All"
+                }],
+                h = 0;
+            c == e ? h = 0 : c > e && f > c ? h = 1 : c == f ? h = 2 : c > f && (h = 3), new Highcharts.StockChart({
+                chart: {
+                    renderTo: a,
+                    backgroundColor: "#fafafa"
+                },
+                credits : {
+
+                	enabled:false
+
+            	},
+                plotOptions: {
+                    series: {
+                        turboThreshold: 0
+                    },
+                    candlestick: {
+                        color: "#d33",
+                        upColor: "#9e4"
+                    }
+                },
+                tooltip: {
+                    xDateFormat: "%Y-%m-%d %H:%M:%S",
+                    color: "#f0f",
+                    changeDecimals: 4,
+                    borderColor: "#058dc7",
+                    crosshairs: !1,
+                    shared: !1,
+                    snap: 1
+                },
+                rangeSelector: {
+                    buttons: g,
+                    selected: h,
+                    inputEnabled: !1
+                },
+                yAxis: [{
+                    opposite: !1,
+                    title: {
+                        text: b
+                    },
+                    top: 11,
+                    height: 200,
+                    lineWidth: 2,
+                    gridLineDashStyle: "ShortDot"
+                }, {
+                    opposite: !1,
+                    title: {
+                        text: "交易量"
+                    },
+                    top: 216,
+                    height: 50,
+                    offset: 0,
+                    lineWidth: 2
+                }, {
+                    opposite: !1,
+                    title: {
+                        text: "MACD(16,26,9)"
+                    },
+                    top: 271,
+                    height: 110,
+                    offset: 0,
+                    lineWidth: 2
+                }],
+                series: d
+            })
+        } catch (i) {
+            console.log(i)
+        }
+    }
+
+		//c.replace(/[\-\/\s:]/g, "") + "/" + d.replace(/[\-\/\s:]/g, "")
+	function fetchURL(_dateArr,_periodType,_platformType,_coinType){
+		var _tickerUrl = "https://getticker.sinaapp.com/fetch/" + _platformType + "/" + _coinType.toLowerCase() + "/" + _periodType + "/" + _dateArr[0].replace(/[\-\/\s:]/g, "") + "/" + _dateArr[1].replace(/[\-\/\s:]/g, "") + "/kline.json";
+		console.log('tickerUrl:'+_tickerUrl);
+		return _tickerUrl;
+	}
+
+	function fetchRecords(_fetchURL,_periodType,_platformType,_coinType){
+	  $.getJSON(_fetchURL,function(data,status){
+		if(data){
+			alert(data);
+			// split the data set into ohlc and volume
+		    var _ohlc = [],
+		        _volume = [];
+
+		    for (var i = 0; i < data.length; i++) {
+		    	//console.log(typeof(data[i][0]));
+		    	var d = data[i][0].toString();
+		    	var timeStamp = new Date(d.slice(0, 4) + "/" + d.slice(4, 6) + "/" + d.slice(6, 8) + " " + d.slice(8, 10) + ":" + d.slice(10, 12) + ":" + d.slice(12, 14)).getTime();
+		        _ohlc.push([
+		            timeStamp, // the date
+		            data[i][1], // open
+		            data[i][2], // high
+		            data[i][3], // low
+		            data[i][4] // close
+		        ]);
+
+		        _volume.push([
+		            timeStamp, // the date
+		            data[i][5] // the volume
+		        ]);
+		    }
+		    return {period: _periodType,eid: _platformType,curreny: _coinType,ohlc: _ohlc,volume: _volume};
+		 }else{
+			alert(data.msg);
+			tstBtn.attr("disabled",false);
+			return;
+	  	}
+   	  }
+	}
+
    </script>
 </html>

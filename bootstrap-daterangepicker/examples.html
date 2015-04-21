@@ -228,11 +228,15 @@
 
 	    // create the chart
 		var type = platformType+'_'+coinType;
-		series[type] = fetchRecords(fetchURL(dateArr,periodType,platformType,coinType),periodType,platformType,coinType);
+		console.log("type:"+type);
+		var fetchRecord = fetchRecords(fetchURL(dateArr,periodType,platformType,coinType),periodType,platformType,coinType);
+		console.log("fetchRecord:"+fetchRecord);
+		series[type] = fetchRecord;
+		console.log("series["+type+"]:"+series[type]);
         newKChart("container", type, series[type].period, [{
             type: "candlestick",
             id: "primary",
-            name: r,
+            name: type,
             data: series[type].ohlc,
             yAxis: 0
         }, {
@@ -399,6 +403,8 @@
 	}
 
 	function fetchRecords(_fetchURL,_periodType,_platformType,_coinType){
+	  $.ajaxSettings.async = false;
+	  var getDate = {};
 	  $.getJSON(_fetchURL,function(data,status){
 		if(data){
 			alert(data);
@@ -423,13 +429,14 @@
 		            data[i][5] // the volume
 		        ]);
 		    }
-		    return {period: _periodType,eid: _platformType,curreny: _coinType,ohlc: _ohlc,volume: _volume};
+		    getDate =  {period: _periodType,eid: _platformType,curreny: _coinType,ohlc: _ohlc,volume: _volume};
+		    console.log("getDate:"+getDate);
 		 }else{
 			alert(data.msg);
 			tstBtn.attr("disabled",false);
-			return;
 	  	}
-   	  }
+   	  });
+	 return getDate;
 	}
 
    </script>

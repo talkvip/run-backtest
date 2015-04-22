@@ -11,7 +11,7 @@
       <script type="text/javascript" src="moment.js"></script>
       <script type="text/javascript" src="daterangepicker.js"></script>
       <script type="text/javascript" src="highstock.js"></script>
-      <script type="text/javascript" src="highcharts-more.js"></script>
+      <!-- <script type="text/javascript" src="highcharts-more.js"></script> -->
    </head>
    <body>
 
@@ -60,7 +60,7 @@
     </div>
     <div class="control-group">
         <div class="controls">
-            <button class="btn btn-primary btn-lg btn-xl" onclick="javascript:runBacktest(this)">开始回测</button>
+            <button id="runBackbtn" class="btn btn-primary btn-lg btn-xl" onclick="runBacktest(this)">开始回测</button>
         </div>
     </div>
         <div class="control-group">
@@ -72,7 +72,7 @@
 
    </body>
    <script type="text/javascript">
-   	   (function(a) {
+   	   !(function(a) {
         function b(a, b) {
             var c, e, f = 9,
                 g = [],
@@ -210,9 +210,234 @@
                firstDay: 1
              }
      });
-   });
 
-   function runBacktest(btn){
+/*     $("#runBackbtn").click(function() {
+
+	 var tstBtn = $("#runBackbtn"),
+		 dateArr = $('#daterangeInput').val().split(' -> '),
+		 periodType = $('#period option:selected').val(),
+		 platformType = $('#platform option:selected').val(),
+		 coinType = $('#coin option:selected').attr('label'),
+		 series = {};
+
+		tstBtn.attr("disabled",true);
+		tstBtn.html("回测中...");
+
+		// create the chart
+		var type = platformType+'_'+coinType;
+		console.log("type:"+type);
+		var fetchRecord = fetchRecords(fetchURL(dateArr,periodType,platformType,coinType),+periodType,platformType,coinType);
+		if((fetchRecord+"")=="{}"){tstBtn.attr("disabled",false);return;}
+		console.log("fetchRecord:"+fetchRecord);
+		series[type] = fetchRecord;
+		console.log("series["+type+"]:"+typeof(series[type].period));
+		newKChart("container", type, series[type].period, [{
+		    type: "candlestick",
+		    id: "primary",
+		    name: type,
+		    data: series[type].ohlc,
+		    yAxis: 0
+		}, {
+		    type: "flags",
+		    shape: "circlepin",
+		    onSeries: "primary",
+		    data: series[type].period
+		}, {
+		    type: "trendline",
+		    lineWidth: 1,
+		    name: "EMA(7)",
+		    linkedTo: "primary",
+		    showInLegend: !0,
+		    algorithm: "EMA",
+		    periods: 7
+		}, {
+		    type: "trendline",
+		    lineWidth: 1,
+		    name: "EMA(30)",
+		    linkedTo: "primary",
+		    showInLegend: !0,
+		    algorithm: "EMA",
+		    periods: 30
+		}, {
+		    type: "column",
+		    name: "Volume",
+		    data: series[type].volume,
+		    yAxis: 1
+		}, {
+		    name: "MACD(12,26,9)",
+		    lineWidth: 1,
+		    linkedTo: "primary",
+		    yAxis: 2,
+		    showInLegend: !0,
+		    type: "trendline",
+		    algorithm: "MACD"
+		}, {
+		    name: "Signal line",
+		    lineWidth: 1,
+		    linkedTo: "primary",
+		    yAxis: 2,
+		    showInLegend: !0,
+		    type: "trendline",
+		    algorithm: "signalLine"
+		}, {
+		    name: "Histogram",
+		    lineWidth: 1,
+		    linkedTo: "primary",
+		    yAxis: 2,
+		    showInLegend: !0,
+		    type: "histogram"
+		}]);
+
+		tstBtn.removeAttr("disabled");
+		tstBtn.html("开始回测");
+	});
+
+	 //b：平台name c：时间段 d:series
+    function newKChart(a, b, c, d) {
+    	Highcharts.setOptions({
+            global: {
+                useUTC: !1
+            },
+            lang: {
+                numericSymbols: ["k", "M", "G", "T", "P", "E"]
+            },
+            credits: {
+                enabled: !1
+            }
+        });
+        try {
+            var e = 0,
+                f = 3,
+                g = [{
+                    type: "hour",
+                    count: 1,
+                    text: "1h"
+                }, {
+                    type: "hour",
+                    count: 3,
+                    text: "3h"
+                }, {
+                    type: "hour",
+                    count: 8,
+                    text: "8h"
+                }, {
+                    type: "all",
+                    text: "All"
+                }],
+                h = 0;
+            c == e ? h = 0 : c > e && f > c ? h = 1 : c == f ? h = 2 : c > f && (h = 3), new Highcharts.StockChart({
+                chart: {
+                    renderTo: a,
+                    backgroundColor: "#fafafa"
+                },
+                credits : {
+
+                	enabled:false
+
+            	},
+                plotOptions: {
+                    series: {
+                        turboThreshold: 0
+                    },
+                    candlestick: {
+                        color: "#d33",
+                        upColor: "#9e4"
+                    }
+                },
+                tooltip: {
+                    xDateFormat: "%Y-%m-%d %H:%M:%S",
+                    color: "#f0f",
+                    changeDecimals: 4,
+                    borderColor: "#058dc7",
+                    crosshairs: !1,
+                    shared: !1,
+                    snap: 1
+                },
+                rangeSelector: {
+                    buttons: g,
+                    selected: h,
+                    inputEnabled: !1
+                },
+                yAxis: [{
+                    opposite: !1,
+                    title: {
+                        text: b
+                    },
+                    top: 11,
+                    height: 200,
+                    lineWidth: 2,
+                    gridLineDashStyle: "ShortDot"
+                }, {
+                    opposite: !1,
+                    title: {
+                        text: "交易量"
+                    },
+                    top: 216,
+                    height: 50,
+                    offset: 0,
+                    lineWidth: 2
+                }, {
+                    opposite: !1,
+                    title: {
+                        text: "MACD(16,26,9)"
+                    },
+                    top: 271,
+                    height: 110,
+                    offset: 0,
+                    lineWidth: 2
+                }],
+                series: d
+            })
+        } catch (i) {
+            console.log(i)
+        }
+    }
+
+		//c.replace(/[\-\/\s:]/g, "") + "/" + d.replace(/[\-\/\s:]/g, "")
+	function fetchURL(_dateArr,_periodType,_platformType,_coinType){
+		var _tickerUrl = "https://getticker.sinaapp.com/fetch/" + _platformType + "/" + _coinType.toLowerCase() + "/" + _periodType + "/" + _dateArr[0].replace(/[\-\/\s:]/g, "") + "/" + _dateArr[1].replace(/[\-\/\s:]/g, "") + "/kline.json";
+		console.log('tickerUrl:'+_tickerUrl);
+		return _tickerUrl;
+	}
+
+	function fetchRecords(_fetchURL,_periodType,_platformType,_coinType){
+	  $.ajaxSettings.async = false;
+	  var getDate = {};
+	  $.getJSON(_fetchURL,function(data,status){
+		if(data){
+			//alert(data);
+			// split the data set into ohlc and volume
+		    var _ohlc = [],
+		        _volume = [];
+
+		    for (var i = 0; i < data.length; i++) {
+		    	//console.log(typeof(data[i][0]));
+		    	var d = data[i][0].toString();
+		    	var timeStamp = new Date(d.slice(0, 4) + "/" + d.slice(4, 6) + "/" + d.slice(6, 8) + " " + d.slice(8, 10) + ":" + d.slice(10, 12) + ":" + d.slice(12, 14)).getTime();
+		        _ohlc.push([
+		            timeStamp, // the date
+		            data[i][1], // open
+		            data[i][2], // high
+		            data[i][3], // low
+		            data[i][4] // close
+		        ]);
+
+		        _volume.push([
+		            timeStamp, // the date
+		            data[i][5] // the volume
+		        ]);
+		    }
+		    getDate =  {period: _periodType,eid: _platformType,curreny: _coinType,ohlc: _ohlc,volume: _volume};
+		    console.log("getDate:"+getDate);
+		 }else{
+			alert(data.msg);
+	  	}
+   	  });
+	 return getDate;
+	}*/
+});
+
+ function runBacktest(btn){
 		var tstBtn = $(btn),
 			stopBtn = tstBtn.next(),
 			dateArr = $('#daterangeInput').val().split(' -> '),
@@ -223,16 +448,15 @@
 
 		tstBtn.attr("disabled",true);
 		tstBtn.html("回测中...");
-
 		
-
 	    // create the chart
 		var type = platformType+'_'+coinType;
 		console.log("type:"+type);
-		var fetchRecord = fetchRecords(fetchURL(dateArr,periodType,platformType,coinType),periodType,platformType,coinType);
+		var fetchRecord = fetchRecords(fetchURL(dateArr,periodType,platformType,coinType),+periodType,platformType,coinType);
+		if((fetchRecord+"")=="{}"){tstBtn.attr("disabled",false);return;}
 		console.log("fetchRecord:"+fetchRecord);
 		series[type] = fetchRecord;
-		console.log("series["+type+"]:"+series[type]);
+		console.log("series["+type+"]:"+typeof(series[type].period)+" -> "+series[type].period);
         newKChart("container", type, series[type].period, [{
             type: "candlestick",
             id: "primary",
@@ -290,7 +514,7 @@
             type: "histogram"
         }]);
 
-		tstBtn.attr("disabled",false);
+		tstBtn.removeAttr("disabled");
 		tstBtn.html("开始回测");
 	}
 
@@ -407,7 +631,7 @@
 	  var getDate = {};
 	  $.getJSON(_fetchURL,function(data,status){
 		if(data){
-			alert(data);
+			//alert(data);
 			// split the data set into ohlc and volume
 		    var _ohlc = [],
 		        _volume = [];
@@ -433,11 +657,9 @@
 		    console.log("getDate:"+getDate);
 		 }else{
 			alert(data.msg);
-			tstBtn.attr("disabled",false);
 	  	}
    	  });
 	 return getDate;
 	}
-
    </script>
 </html>

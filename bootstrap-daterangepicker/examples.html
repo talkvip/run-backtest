@@ -439,7 +439,7 @@
 
  function runBacktest(btn){
 		var tstBtn = $(btn),
-			stopBtn = tstBtn.next(),
+			//stopBtn = tstBtn.next(),
 			dateArr = $('#daterangeInput').val().split(' -> '),
 			periodType = $('#period option:selected').val(),
 			platformType = $('#platform option:selected').val(),
@@ -457,6 +457,48 @@
 		console.log("fetchRecord:"+fetchRecord);
 		series[type] = fetchRecord;
 		console.log("series["+type+"]:"+typeof(series[type].period)+" -> "+series[type].period);
+
+		//backtest_do(startTime, endTime, period, pairs, script);
+		var logs = backtest_do(series[type].recordsCache,series[type].eid);
+
+		console.log(logs);
+
+
+
+         var b = 0,
+            c = 1,
+            d = 2,
+            e = 8,
+            f = 9;
+        var g = [];
+        for (var h in series) g[series[h].eid] = [];
+        for (var i = 0; i < logs.length; i++) {
+            var j = logs[i].log_type;
+            if (!logs[i].__hide && j != e && j != f) {
+            	var d = logs[i].date.toString();
+                var k = new Date(d.slice(0, 4) + "/" + d.slice(4, 6) + "/" + d.slice(6, 8) + " " + d.slice(8, 10) + ":" + d.slice(10, 12) + ":" + d.slice(12, 14)).getTime();
+                //var k = logs[i].date;
+                console.log(k);
+                    l = logs[i].platform_id; - 1 != l && (j == b ? g[l].push({
+                    x: k,
+                    title: "买",
+                    text: "买入: " + logs[i].amount + "<br>价格: " + logs[i].price + "<br>单号: " + logs[i].order_id
+                }) : j == c ? g[l].push({
+                    x: k,
+                    title: "卖",
+                    text: "卖出: " + logs[i].amount + "<br>价格: " + logs[i].price + "<br>单号: " + logs[i].order_id
+                }) : j == d && g[l].push({
+                    x: k,
+                    title: "撤",
+                    text: "撤消: 单号 " + logs[i].order_id
+                }));
+            }}
+
+            console.log(g[series[type].eid]);
+            for (var i = 0; i < g[series[type].eid].length; i++) {
+            	console.log(g[series[type].eid][i]);
+            };
+
         newKChart("container", type, series[type].period, [{
             type: "candlestick",
             id: "primary",
@@ -467,7 +509,7 @@
             type: "flags",
             shape: "circlepin",
             onSeries: "primary",
-            data: series[type].period
+            data: g[series[type].eid]
         }, {
             type: "trendline",
             lineWidth: 1,
@@ -631,7 +673,7 @@
 	  var getDate = {};
 	  $.getJSON(_fetchURL,function(data,status){
 		if(data){
-			//alert(data);
+			console.log("data typeof:"+typeof(data));
 			// split the data set into ohlc and volume
 		    var _ohlc = [],
 		        _volume = [];
@@ -653,13 +695,74 @@
 		            data[i][5] // the volume
 		        ]);
 		    }
-		    getDate =  {period: _periodType,eid: _platformType,curreny: _coinType,ohlc: _ohlc,volume: _volume};
+		    getDate =  {period: _periodType,eid: _platformType,curreny: _coinType,ohlc: _ohlc,volume: _volume,recordsCache: data};
 		    console.log("getDate:"+getDate);
 		 }else{
 			alert(data.msg);
 	  	}
    	  });
 	 return getDate;
+	}
+
+	//function backtest_do(startTime, endTime, period, pairs, script) {
+	function backtest_do(data, eid, script) {
+		var logsCounter = 0,
+		    LOG_TYPE_BUY = 0,
+		    LOG_TYPE_SELL = 1,
+		    LOG_TYPE_CANCEL = 2,
+		    LOG_TYPE_ERROR = 3,
+		    LOG_TYPE_PROFIT = 4,
+		    LOG_TYPE_LOG = 5,
+		    LOG_TYPE_RESTART = 6,
+		    LOG_TYPE_STATUS = 7,
+		    LOG_TYPE_CHART_NEW = 8,
+		    LOG_TYPE_CHART_ADD = 9,
+		    LOG_TYPE_CHART_DEL = 10,
+		    LOG_TYPE_PROFIT_DEL = 11,
+			logs = [];
+		function formatDate(a) {
+		    var b = a.getFullYear(),
+		        c = a.getMonth() + 1,
+		        d = a.getDate(),
+		        e = a.getHours(),
+		        f = a.getMinutes(),
+		        g = a.getSeconds();
+		    return 10 > c && (c = "0" + c), 10 > d && (d = "0" + d), 10 > e && (e = "0" + e), 10 > f && (f = "0" + f), 10 > g && (g = "0" + g), b + "-" + c + "-" + d + " " + e + ":" + f + ":" + g
+		}
+		function valuesToString(a) {
+	        for (var b = "", c = 0; c < a.length; c++) c > 0 && (b += " "), b += "undefined" == typeof a[c] || null === a[c] ? "null" : "[object Object]" == a[c].toString() ? JSON.stringify(a[c]) : a[c].toString();
+	        return b
+	    }
+		//a:log_type; b:platform_id; c:order_id; d:price; e:amount; f:extra;
+		function __log(a, b, c, d, e, f,z) {
+	        logs.push({
+	            id: logsCounter + 1,
+	            platform_id: b,
+	            order_id: c,
+	            log_type: a,
+	            price: d.toFixed(4),
+	            amount: e.toFixed(4),
+	            extra: f,
+	            __hide: !1,
+	            date: z
+	        });
+	    }
+
+	    for (var i = 0; i < data.length-1; i++) {
+	    	//console.log(data[i])
+	    	//console.log(data[i]);
+	    	var section = data[i][4]-data[i+1][4];
+	    	if(section > 1)
+	    		__log(LOG_TYPE_BUY,eid,111,100+1,111+1,valuesToString(Array.prototype.slice.call(arguments).slice(1)),data[i+1][0]);
+	    	else if(section < -1)
+	    		__log(LOG_TYPE_BUY,eid,000,100-1,111-1,valuesToString(Array.prototype.slice.call(arguments).slice(1)),data[i+1][0]);
+	    	continue;
+	    }
+
+	    return logs;
+
+
+
 	}
    </script>
 </html>

@@ -1,0 +1,127 @@
+<!doctype html>
+
+<title>CodeMirror: JavaScript mode</title>
+<meta charset="utf-8"/>
+<!-- <link rel=stylesheet href="../../doc/docs.css"> -->
+
+<link rel="stylesheet" href="../../lib/codemirror.css">
+<link rel="stylesheet" href="../../theme/eclipse.css">
+<link rel="stylesheet" href="../../addon/lint/lint.css">
+<script src="../../lib/codemirror.js"></script>
+<script src="javascript.js"></script>
+<!--lint-->
+<script src="jshint.js"></script>
+<script src="../../addon/lint/lint.js"></script>
+<script src="../../addon/lint/javascript-lint.js"></script>
+<style type="text/css">
+.CodeMirror {
+	border-top: 1px solid black; 
+	border-bottom: 1px solid black;
+}
+.CodeMirror {
+  border: 1px solid #eee;
+  height: auto;
+}
+
+</style>
+<!-- hint -->
+<link rel="stylesheet" href="../../addon/hint/show-hint.css">
+<script src="../../addon/hint/show-hint.js"></script>
+<script src="../../addon/hint/javascript-hint.js"></script>
+<!-- activeline -->
+<script src="../../addon/selection/active-line.js"></script>
+<!-- anywordhint -->
+<script src="../../addon/hint/anyword-hint.js"></script>
+<!-- closebrackets -->
+<script src="../../addon/edit/closebrackets.js"></script>
+<!-- matchbrackets -->
+<script src="../../addon/edit/matchbrackets.js"></script>
+<article>
+
+
+<div><textarea id="code" name="code">
+// Demo code (the actual new parser character stream implementation)
+
+function StringStream(string) {
+  this.pos = 0;
+  this.string = string;
+}
+
+StringStream.prototype = {
+  done: function() {return this.pos >= this.string.length;},
+  peek: function() {return this.string.charAt(this.pos);},
+  next: function() {
+    if (this.pos &lt; this.string.length)
+      return this.string.charAt(this.pos++);
+  },
+  eat: function(match) {
+    var ch = this.string.charAt(this.pos);
+    if (typeof match == "string") var ok = ch == match;
+    else var ok = ch &amp;&amp; match.test ? match.test(ch) : match(ch);
+    if (ok) {this.pos++; return ch;}
+  },
+  eatWhile: function(match) {
+    var start = this.pos;
+    while (this.eat(match));
+    if (this.pos > start) return this.string.slice(start, this.pos);
+  },
+  backUp: function(n) {this.pos -= n;},
+  column: function() {return this.pos;},
+  eatSpace: function() {
+    var start = this.pos;
+    while (/\s/.test(this.string.charAt(this.pos))) this.pos++;
+    return this.pos - start;
+  },
+  match: function(pattern, consume, caseInsensitive) {
+    if (typeof pattern == "string") {
+      function cased(str) {return caseInsensitive ? str.toLowerCase() : str;}
+      if (cased(this.string).indexOf(cased(pattern), this.pos) == this.pos) {
+        if (consume !== false) this.pos += str.length;
+        return true;
+      }
+    }
+    else {
+      var match = this.string.slice(this.pos).match(pattern);
+      if (match &amp;&amp; consume !== false) this.pos += match[0].length;
+      return match;
+    }
+  }
+};
+</textarea></div>
+
+    <script>
+	/*设置anyword-hint，会覆盖JavaScript-hint*/
+    //CodeMirror.commands.autocomplete = function(cm) {
+    //    cm.showHint({hint: CodeMirror.hint.anyword});
+    //}
+    /*初始化editor*/
+    var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+        //mode: "javascript",
+        indentUnit: 4,
+        lineNumbers: !0,
+        showCursorWhenSelecting: !0,
+        gutters: ["CodeMirror-lint-markers"],
+        lint: !0,
+        theme: "eclipse",
+        //extraKeys: {"Ctrl-Q": "toggleComment"},
+        extraKeys: {"Alt-/": "autocomplete"},
+        mode: {name: "javascript", globalVars: !0},
+        showHint: !0,
+        styleActiveLine: !0,
+        autoCloseBrackets: !0,
+        matchBrackets: !0,
+    });
+    /*设置输入过程自动提示，模式为anyword-hint*/
+    editor.on("keyup", function(editor, change) {
+    if (27 != change.keyCode && !editor.state.completionActive) {
+        var d = editor.getTokenAt(editor.getCursor()).string;
+        if (d.length > 0) {
+            var e = d[d.length - 1];
+            ("_" == d[0] || d.length > 2 && " " !== e && "	" != e) && CodeMirror.showHint(editor, CodeMirror.hint.anyword, {
+                completeSingle: !1
+            })
+        }
+    }
+    });
+    </script>
+  </article>

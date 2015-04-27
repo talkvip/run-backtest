@@ -11,6 +11,7 @@
       <script type="text/javascript" src="moment.js"></script>
       <script type="text/javascript" src="daterangepicker.js"></script>
       <script type="text/javascript" src="highstock.js"></script>
+      <script type="text/javascript" src="sandbox.js"></script>
       <!-- <script type="text/javascript" src="highcharts-more.js"></script> -->
 
       <link rel="stylesheet" href="codemirror/lib/codemirror.css">
@@ -88,11 +89,19 @@
 	            <option value="0" selected="selected" label="BTC">BTC</option>
 	            <option value="1" label="LTC">LTC</option>
             </select>
+            <div class="input-prepend">
+                <span class="add-on">余额</span>
+                <input class="span3" name="reNum" id="reNum" type="number" value="10000" placeholder="余额">
+            </div>
+            <div class="input-prepend">
+                <span class="add-on">余币</span>
+                <input class="span3" name="reCoin" id="reCoin" type="number" value="3" placeholder="余币">
+            </div>
         </div>
     </div>
     <div class="control-group">
         <div class="controls">
-            <button id="runBackbtn" class="btn btn-primary btn-lg btn-xl" onclick="runBacktest(this)">开始回测</button>
+            <button id="runBackbtn" class="btn btn-primary btn-lg btn-xl" onclick="">开始回测</button>
         </div>
     </div>
 
@@ -262,358 +271,288 @@ function main() {
              }
      });
 
+     $('#runBackbtn').click(function(){
+			var tstBtn = $(this),
+				dateArr = $('#daterangeInput').val().split(' -> '),
+				periodType = $('#period option:selected').val(),
+				platformType = $('#platform option:selected').val(),
+				coinType = $('#coin option:selected').attr('label'),
+				script = editor.getValue(),//动态获取codemirror的值
+				reNum = $('#reNum').val(),
+				reCoin = $('#reCoin').val(),
+				platformArr = [];
+			platformArr.push([platformType,coinType,reNum,reCoin]);
+			console.log(platformArr);
+			console.log(script);
+
+			tstBtn.attr("disabled",true);
+			tstBtn.html("回测中...");
+			
+		    var recordsCache = getRecordsCache(fetchURL(dateArr,periodType,platformType,coinType));
+		    console.log(recordsCache);
+		    backtest(dateArr[0], dateArr[1], periodType, platformArr, script, function(a) {
+		        //self.postMessage({progress: 100,ret: a,cache: recordsCache,summary: d})
+		        console.log(a);
+
+		        var b = 0,//LOG_TYPE_BUY
+		            c = 1,//LOG_TYPE_SELL
+		            d = 2,//LOG_TYPE_CANCEL
+		            e = 8,//LOG_TYPE_CHART_NEW
+		            f = 9;//LOG_TYPE_CHART_ADD
+		        var g = [];
+		        for (var h in a.series) g[a.series[h].eid] = [];
+		        for (var i = 0; i < a.logs.length; i++) {
+		            var j = a.logs[i].log_type;
+		            console.log(j)
+		            if (!a.logs[i].__hide && j != e && j != f) {
+		            	var d = a.logs[i].date.toString();
+		                var k = new Date(a.logs[i].date.replace(/-/g, "/")).getTime(),
+		                //var k = logs[i].date;
+		                //console.log(k);
+		                l = a.logs[i].platform_id; - 1 != l && (j == b ? g[l].push({
+		                    x: k,
+		                    title: "买",
+		                    text: "买入: " + a.logs[i].amount + "<br>价格: " + a.logs[i].price + "<br>单号: " + a.logs[i].order_id
+		                }) : j == c ? g[l].push({
+		                    x: k,
+		                    title: "卖",
+		                    text: "卖出: " + a.logs[i].amount + "<br>价格: " + a.logs[i].price + "<br>单号: " + a.logs[i].order_id
+		                }) : j == d && g[l].push({
+		                    x: k,
+		                    title: "撤",
+		                    text: "撤消: 单号 " + a.logs[i].order_id
+		                }));
+
+
+		                 var _class = "",
+		                 	 _name = "";
+					     if(j === 0){
+					     	_class = "success";
+					     	_name = "买入" 
+					     }else if(j === 1){
+					        _class ="important";
+					        _name = "卖出"}
+					     var tr = "<tr><td>"+formatDate(new Date(k))+"</td><td><a class='label label-"+_class+"'>"+_name+"</a></td><td>"+a.logs[i].extra+"</td></tr>";
+					     console.log(tr);
+						 $("#logs tr:eq(0)").after(tr);
+
+		        	}
+		        }
+		        for (var h in a.series) {
+			        var type = a.series[h].eid + "_" + a.series[h].currency;
+			        console.log(g[a.series[type].eid]);
+			        //for (var i = 0; i < g[a.series[type].eid].length; i++) {
+			        //	console.log(g[a.series[type].eid][i]);
+			        //};
+			        
+			        // create the chart
+			        newKChart("container", type, a.series[h].period, [{
+			            type: "candlestick",
+			            id: "primary",
+			            name: type,
+			            data: a.series[h].ohlc,
+			            yAxis: 0
+			        }, {
+			            type: "flags",
+			            shape: "circlepin",
+			            onSeries: "primary",
+			            data: g[a.series[h].eid]
+			        }, {
+			            type: "trendline",
+			            lineWidth: 1,
+			            name: "EMA(7)",
+			            linkedTo: "primary",
+			            showInLegend: !0,
+			            algorithm: "EMA",
+			            periods: 7
+			        }, {
+			            type: "trendline",
+			            lineWidth: 1,
+			            name: "EMA(30)",
+			            linkedTo: "primary",
+			            showInLegend: !0,
+			            algorithm: "EMA",
+			            periods: 30
+			        }, {
+			            type: "column",
+			            name: "Volume",
+			            data: a.series[h].volume,
+			            yAxis: 1
+			        }, {
+			            name: "MACD(12,26,9)",
+			            lineWidth: 1,
+			            linkedTo: "primary",
+			            yAxis: 2,
+			            showInLegend: !0,
+			            type: "trendline",
+			            algorithm: "MACD"
+			        }, {
+			            name: "Signal line",
+			            lineWidth: 1,
+			            linkedTo: "primary",
+			            yAxis: 2,
+			            showInLegend: !0,
+			            type: "trendline",
+			            algorithm: "signalLine"
+			        }, {
+			            name: "Histogram",
+			            lineWidth: 1,
+			            linkedTo: "primary",
+			            yAxis: 2,
+			            showInLegend: !0,
+			            type: "histogram"
+			        }]);
+				}
+		    }, function(a, b) {
+		        //var e = parseFloat((100 * a).toFixed(1));
+		        //e != c && (c = e, d = b, self.postMessage({progress: c,summary: b}))
+		    }, recordsCache);
+		    
+
+
+
+			tstBtn.removeAttr("disabled");
+			tstBtn.html("开始回测");
+
+	 });
+
 });
+				//c.replace(/[\-\/\s:]/g, "") + "/" + d.replace(/[\-\/\s:]/g, "")
+		function fetchURL(_dateArr,_periodType,_platformType,_coinType){
+			var _tickerUrl = "https://getticker.sinaapp.com/fetch/" + _platformType + "/" + _coinType.toLowerCase() + "/" + _periodType + "/" + _dateArr[0].replace(/[\-\/\s:]/g, "") + "/" + _dateArr[1].replace(/[\-\/\s:]/g, "") + "/kline.json";
+			console.log('tickerUrl:'+_tickerUrl);
+			return _tickerUrl;
+		}
 
- function runBacktest(btn){
-		var tstBtn = $(btn),
-			//stopBtn = tstBtn.next(),
-			dateArr = $('#daterangeInput').val().split(' -> '),
-			periodType = $('#period option:selected').val(),
-			platformType = $('#platform option:selected').val(),
-			coinType = $('#coin option:selected').attr('label'),
-			script = $('#code').val(),
-			series = {};
+		function getRecordsCache(_fetchURL){
+		  $.ajaxSettings.async = false;
+		  var dataArr = [],
+		  	  recordsCache = {},
+		      url = _fetchURL.slice(6);
+		  $.getJSON(_fetchURL,function(data,status){
+			if(data){
+				console.log("data typeof:"+typeof(data));
+				// split the data set into ohlc and volume
+			    for (var i = 0; i < data.length; i++) {
+			    	//console.log(typeof(data[i][0]));
+			    	var d = data[i][0].toString();
+			    	var timeStamp = new Date(d.slice(0, 4) + "/" + d.slice(4, 6) + "/" + d.slice(6, 8) + " " + d.slice(8, 10) + ":" + d.slice(10, 12) + ":" + d.slice(12, 14)).getTime();
 
-		tstBtn.attr("disabled",true);
-		tstBtn.html("回测中...");
-		
-	    // create the chart
-		var type = platformType+'_'+coinType;
-		console.log("type:"+type);
-		var a = fetchRecords(fetchURL(dateArr,periodType,platformType,coinType),+periodType,platformType,coinType,script,function(data, eid, script) {
-						var logsCounter = 0,
-						    LOG_TYPE_BUY = 0,
-						    LOG_TYPE_SELL = 1,
-						    LOG_TYPE_CANCEL = 2,
-						    LOG_TYPE_ERROR = 3,
-						    LOG_TYPE_PROFIT = 4,
-						    LOG_TYPE_LOG = 5,
-						    LOG_TYPE_RESTART = 6,
-						    LOG_TYPE_STATUS = 7,
-						    LOG_TYPE_CHART_NEW = 8,
-						    LOG_TYPE_CHART_ADD = 9,
-						    LOG_TYPE_CHART_DEL = 10,
-						    LOG_TYPE_PROFIT_DEL = 11,
-							logs = [];
+			    	dataArr.push({Time: timeStamp,Open: data[i][1],High: data[i][2],Low: data[i][3],Close: data[i][4],Volume: data[i][5]})
 
-						function valuesToString(a) {
-					        for (var b = "", c = 0; c < a.length; c++) c > 0 && (b += " "), b += "undefined" == typeof a[c] || null === a[c] ? "null" : "[object Object]" == a[c].toString() ? JSON.stringify(a[c]) : a[c].toString();
-					        return b
-					    }
-						//a:log_type; b:platform_id; c:order_id; d:price; e:amount; f:extra;
-						function __log(a, b, c, d, e, f,z) {
-					        logs.push({
-					            id: logsCounter + 1,
-					            platform_id: b,
-					            order_id: c,
-					            log_type: a,
-					            price: d.toFixed(4),
-					            amount: e.toFixed(4),
-					            extra: f,
-					            __hide: !1,
-					            date: z
-					        });
-					    }
-
-					    for (var i = 0; i < data.length-1; i++) {
-					    	//console.log(data[i])
-					    	//console.log(data[i]);
-					    	var section = data[i][4]-data[i+1][4];
-					    	if(section > 1)
-					    		__log(LOG_TYPE_BUY,eid,111,100+1,111+1,valuesToString(Array.prototype.slice.call(arguments).slice(1)),data[i+1][0]);
-					    	else if(section < -1)
-					    		__log(LOG_TYPE_SELL,eid,000,100-1,111-1,valuesToString(Array.prototype.slice.call(arguments).slice(1)),data[i+1][0]);
-					    	continue;
-					    }
-					    //console.log(logs);
-					    return logs;
-
-					});
-		if((a.series+"")=="{}"){tstBtn.attr("disabled",false);return;}
-		console.log(a);
-		//series[type] = fetchRecord;
-		console.log("a.series["+type+"]:"+typeof(a.series[type].period)+" -> "+a.series[type].period);
-
-		//backtest_do(startTime, endTime, period, pairs, script);
-		//var logs = backtest_do(series[type].recordsCache,series[type].eid);
-
-		//console.log(logs);
+			    }
+			 }else{
+				alert(data.msg);
+		  	}
+	   	  });
+	   	  recordsCache[url] = dataArr;
+		//console.log(series[type].eid);
+		 return recordsCache;
+		}
 
 
+		 //b：平台name c：时间段 d:series
+	    function newKChart(a, b, c, d) {
+	    	Highcharts.setOptions({
+	            global: {
+	                useUTC: !1
+	            },
+	            lang: {
+	                numericSymbols: ["k", "M", "G", "T", "P", "E"]
+	            },
+	            credits: {
+	                enabled: !1
+	            }
+	        });
+	        try {
+	            var e = 0,
+	                f = 3,
+	                g = [{
+	                    type: "hour",
+	                    count: 1,
+	                    text: "1h"
+	                }, {
+	                    type: "hour",
+	                    count: 3,
+	                    text: "3h"
+	                }, {
+	                    type: "hour",
+	                    count: 8,
+	                    text: "8h"
+	                }, {
+	                    type: "all",
+	                    text: "All"
+	                }],
+	                h = 0;
+	            c == e ? h = 0 : c > e && f > c ? h = 1 : c == f ? h = 2 : c > f && (h = 3), new Highcharts.StockChart({
+	                chart: {
+	                    renderTo: a,
+	                    backgroundColor: "#fafafa"
+	                },
+	                credits : {
 
-        var b = 0,
-            c = 1,
-            d = 2,
-            e = 8,
-            f = 9;
-        var g = [];
-        for (var h in a.series) g[a.series[h].eid] = [];
-        for (var i = 0; i < a.logs.length; i++) {
-            var j = a.logs[i].log_type;
-            //console.log(typeof(j))
-            if (!a.logs[i].__hide && j != e && j != f) {
-            	var d = a.logs[i].date.toString();
-                var k = new Date(d.slice(0, 4) + "/" + d.slice(4, 6) + "/" + d.slice(6, 8) + " " + d.slice(8, 10) + ":" + d.slice(10, 12) + ":" + d.slice(12, 14)).getTime();
-                //var k = logs[i].date;
-                //console.log(k);
-                l = a.logs[i].platform_id; - 1 != l && (j == b ? g[l].push({
-                    x: k,
-                    title: "买",
-                    text: "买入: " + a.logs[i].amount + "<br>价格: " + a.logs[i].price + "<br>单号: " + a.logs[i].order_id
-                }) : j == c ? g[l].push({
-                    x: k,
-                    title: "卖",
-                    text: "卖出: " + a.logs[i].amount + "<br>价格: " + a.logs[i].price + "<br>单号: " + a.logs[i].order_id
-                }) : j == d && g[l].push({
-                    x: k,
-                    title: "撤",
-                    text: "撤消: 单号 " + a.logs[i].order_id
-                }));
+	                	enabled:false
+
+	            	},
+	                plotOptions: {
+	                    series: {
+	                        turboThreshold: 0
+	                    },
+	                    candlestick: {
+	                        color: "#d33",
+	                        upColor: "#9e4"
+	                    }
+	                },
+	                tooltip: {
+	                    xDateFormat: "%Y-%m-%d %H:%M:%S",
+	                    color: "#f0f",
+	                    changeDecimals: 4,
+	                    borderColor: "#058dc7",
+	                    crosshairs: !1,
+	                    shared: !1,
+	                    snap: 1
+	                },
+	                rangeSelector: {
+	                    buttons: g,
+	                    selected: h,
+	                    inputEnabled: !1
+	                },
+	                yAxis: [{
+	                    opposite: !1,
+	                    title: {
+	                        text: b
+	                    },
+	                    top: 11,
+	                    height: 200,
+	                    lineWidth: 2,
+	                    gridLineDashStyle: "ShortDot"
+	                }, {
+	                    opposite: !1,
+	                    title: {
+	                        text: "交易量"
+	                    },
+	                    top: 216,
+	                    height: 50,
+	                    offset: 0,
+	                    lineWidth: 2
+	                }, {
+	                    opposite: !1,
+	                    title: {
+	                        text: "MACD(16,26,9)"
+	                    },
+	                    top: 271,
+	                    height: 110,
+	                    offset: 0,
+	                    lineWidth: 2
+	                }],
+	                series: d
+	            })
+	        } catch (i) {
+	            console.log(i)
+	        }
+	    }
 
 
-                 var _class = "",
-                 	 _name = "";
-			     if(j === 0){
-			     	_class = "success";
-			     	_name = "买入" 
-			     }else if(j === 1){
-			        _class ="important";
-			        _name = "卖出"}
-			     var tr = "<tr><td>"+formatDate(new Date(k))+"</td><td><a class='label label-"+_class+"'>"+_name+"</a></td><td>"+a.logs[i]+"</td></tr>";
-			     console.log(tr);
-				 $("#logs tr:eq(0)").after(tr);
-
-        	}
-        }
-
-        console.log(g[a.series[type].eid]);
-        //for (var i = 0; i < g[a.series[type].eid].length; i++) {
-        //	console.log(g[a.series[type].eid][i]);
-        //};
-
-        newKChart("container", type, a.series[type].period, [{
-            type: "candlestick",
-            id: "primary",
-            name: type,
-            data: a.series[type].ohlc,
-            yAxis: 0
-        }, {
-            type: "flags",
-            shape: "circlepin",
-            onSeries: "primary",
-            data: g[a.series[type].eid]
-        }, {
-            type: "trendline",
-            lineWidth: 1,
-            name: "EMA(7)",
-            linkedTo: "primary",
-            showInLegend: !0,
-            algorithm: "EMA",
-            periods: 7
-        }, {
-            type: "trendline",
-            lineWidth: 1,
-            name: "EMA(30)",
-            linkedTo: "primary",
-            showInLegend: !0,
-            algorithm: "EMA",
-            periods: 30
-        }, {
-            type: "column",
-            name: "Volume",
-            data: a.series[type].volume,
-            yAxis: 1
-        }, {
-            name: "MACD(12,26,9)",
-            lineWidth: 1,
-            linkedTo: "primary",
-            yAxis: 2,
-            showInLegend: !0,
-            type: "trendline",
-            algorithm: "MACD"
-        }, {
-            name: "Signal line",
-            lineWidth: 1,
-            linkedTo: "primary",
-            yAxis: 2,
-            showInLegend: !0,
-            type: "trendline",
-            algorithm: "signalLine"
-        }, {
-            name: "Histogram",
-            lineWidth: 1,
-            linkedTo: "primary",
-            yAxis: 2,
-            showInLegend: !0,
-            type: "histogram"
-        }]);
-
-		tstBtn.removeAttr("disabled");
-		tstBtn.html("开始回测");
-	}
-
-	function formatDate(a) {
-	    var b = a.getFullYear(),
-	        c = a.getMonth() + 1,
-	        d = a.getDate(),
-	        e = a.getHours(),
-	        f = a.getMinutes(),
-	        g = a.getSeconds();
-	    return 10 > c && (c = "0" + c), 10 > d && (d = "0" + d), 10 > e && (e = "0" + e), 10 > f && (f = "0" + f), 10 > g && (g = "0" + g), b + "-" + c + "-" + d + " " + e + ":" + f + ":" + g
-	}
-
-	 //b：平台name c：时间段 d:series
-    function newKChart(a, b, c, d) {
-    	Highcharts.setOptions({
-            global: {
-                useUTC: !1
-            },
-            lang: {
-                numericSymbols: ["k", "M", "G", "T", "P", "E"]
-            },
-            credits: {
-                enabled: !1
-            }
-        });
-        try {
-            var e = 0,
-                f = 3,
-                g = [{
-                    type: "hour",
-                    count: 1,
-                    text: "1h"
-                }, {
-                    type: "hour",
-                    count: 3,
-                    text: "3h"
-                }, {
-                    type: "hour",
-                    count: 8,
-                    text: "8h"
-                }, {
-                    type: "all",
-                    text: "All"
-                }],
-                h = 0;
-            c == e ? h = 0 : c > e && f > c ? h = 1 : c == f ? h = 2 : c > f && (h = 3), new Highcharts.StockChart({
-                chart: {
-                    renderTo: a,
-                    backgroundColor: "#fafafa"
-                },
-                credits : {
-
-                	enabled:false
-
-            	},
-                plotOptions: {
-                    series: {
-                        turboThreshold: 0
-                    },
-                    candlestick: {
-                        color: "#d33",
-                        upColor: "#9e4"
-                    }
-                },
-                tooltip: {
-                    xDateFormat: "%Y-%m-%d %H:%M:%S",
-                    color: "#f0f",
-                    changeDecimals: 4,
-                    borderColor: "#058dc7",
-                    crosshairs: !1,
-                    shared: !1,
-                    snap: 1
-                },
-                rangeSelector: {
-                    buttons: g,
-                    selected: h,
-                    inputEnabled: !1
-                },
-                yAxis: [{
-                    opposite: !1,
-                    title: {
-                        text: b
-                    },
-                    top: 11,
-                    height: 200,
-                    lineWidth: 2,
-                    gridLineDashStyle: "ShortDot"
-                }, {
-                    opposite: !1,
-                    title: {
-                        text: "交易量"
-                    },
-                    top: 216,
-                    height: 50,
-                    offset: 0,
-                    lineWidth: 2
-                }, {
-                    opposite: !1,
-                    title: {
-                        text: "MACD(16,26,9)"
-                    },
-                    top: 271,
-                    height: 110,
-                    offset: 0,
-                    lineWidth: 2
-                }],
-                series: d
-            })
-        } catch (i) {
-            console.log(i)
-        }
-    }
-
-		//c.replace(/[\-\/\s:]/g, "") + "/" + d.replace(/[\-\/\s:]/g, "")
-	function fetchURL(_dateArr,_periodType,_platformType,_coinType){
-		var _tickerUrl = "https://getticker.sinaapp.com/fetch/" + _platformType + "/" + _coinType.toLowerCase() + "/" + _periodType + "/" + _dateArr[0].replace(/[\-\/\s:]/g, "") + "/" + _dateArr[1].replace(/[\-\/\s:]/g, "") + "/kline.json";
-		console.log('tickerUrl:'+_tickerUrl);
-		return _tickerUrl;
-	}
-
-	function fetchRecords(_fetchURL,_periodType,_platformType,_coinType,_script,_finishBack){
-	  $.ajaxSettings.async = false;
-	  var series = {},
-	  	  logs = {},
-	  	  recordsCache = [],
-	  	  type = _platformType+'_'+_coinType;
-	  $.getJSON(_fetchURL,function(data,status){
-		if(data){
-			recordsCache = data;
-			console.log("data typeof:"+typeof(data));
-			// split the data set into ohlc and volume
-		    var _ohlc = [],
-		        _volume = [];
-
-		    for (var i = 0; i < data.length; i++) {
-		    	//console.log(typeof(data[i][0]));
-		    	var d = data[i][0].toString();
-		    	var timeStamp = new Date(d.slice(0, 4) + "/" + d.slice(4, 6) + "/" + d.slice(6, 8) + " " + d.slice(8, 10) + ":" + d.slice(10, 12) + ":" + d.slice(12, 14)).getTime();
-		        _ohlc.push([
-		            timeStamp, // the date
-		            data[i][1], // open
-		            data[i][2], // high
-		            data[i][3], // low
-		            data[i][4] // close
-		        ]);
-
-		        _volume.push([
-		            timeStamp, // the date
-		            data[i][5] // the volume
-		        ]);
-		    }
-		    series[type] =  {period: _periodType,eid: _platformType,curreny: _coinType,ohlc: _ohlc,volume: _volume};
-		    console.log(series);
-		 }else{
-			alert(data.msg);
-	  	}
-   	  });
-	//console.log(series[type].eid);
-	logs = _finishBack(recordsCache,series[type].eid,_script);
-	 return { series : series,
-	 		  logs   : logs };
-	}
-
-	//function backtest_do(startTime, endTime, period, pairs, script) {
 	
    </script>
    <script type="text/javascript">
@@ -648,7 +587,7 @@ function main() {
 	        })
 	      }
 	   }
-	 });}
-	initEditor(document.getElementById("code"));
+	 });return editor}
+	var editor = initEditor(document.getElementById("code"));
    </script>
 </html>

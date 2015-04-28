@@ -308,12 +308,11 @@ function main() {
 		            var j = a.logs[i].log_type;
 		            console.log(j)
 		            if (!a.logs[i].__hide && j != e && j != f) {
-		            	//var d = a.logs[i].date.toString();
+		            	var d = a.logs[i].date.toString();
 		                var k = new Date(a.logs[i].date.replace(/-/g, "/")).getTime(),
 		                //var k = logs[i].date;
 		                //console.log(k);
-		                l = a.logs[i].platform_id;
-		                console.log('++++++++'+l); - 1 != l && (j == b ? g[l].push({
+		                l = a.logs[i].platform_id; - 1 != l && (j == b ? g[l].push({
 		                    x: k,
 		                    title: "买",
 		                    text: "买入: " + a.logs[i].amount + "<br>价格: " + a.logs[i].price + "<br>单号: " + a.logs[i].order_id
@@ -328,7 +327,8 @@ function main() {
 		                }));
 
 
-		                 var _class = "", _name = "";
+		                 var _class = "",
+		                 	 _name = "";
 					     j === 0 && (_class = 'success',_name = '买入') ||
 					     j === 1 && (_class = 'important', _name = '卖出') ||
 					     j === 2 && (_class = 'inverse', _name = '撤销') ||
@@ -336,7 +336,7 @@ function main() {
 					     j === 4 && (_class = 'warning', _name = '收益') ||
 					     j === 5 && (_class = 'info', _name = '信息') 
 
-					     var tr = "<tr><td>"+formatDate(new Date(k))+"</td><td>"+eid2str(a.logs[i].platform_id)+"</td><td><a class='label label-"+_class+"'>"+_name+"</a></td><td>"+a.logs[i].price+"</td><td>"+a.logs[i].amount+"</td><td>"+a.logs[i].extra+"</td></tr>";
+					     var tr = "<tr><td>"+formatDate(new Date(k))+"</td><td><a class='label label-"+_class+"'>"+_name+"</a></td><td>"+a.logs[i].extra+"</td></tr>";
 					     console.log(tr);
 						 $("#logs tr:eq(0)").after(tr);
 
@@ -344,8 +344,7 @@ function main() {
 		        }
 		        for (var h in a.series) {
 			        var type = eid2str(a.series[h].eid) + "_" + a.series[h].currency;
-			        console.log('1111111111-'+a.series[h].eid);
-			        console.log(g[a.series[h].eid]);
+			        //console.log(g[a.series[type].eid]);
 			        //for (var i = 0; i < g[a.series[type].eid].length; i++) {
 			        //	console.log(g[a.series[type].eid][i]);
 			        //};
@@ -381,7 +380,7 @@ function main() {
 			        }, {
 			            type: "column",
 			            name: "Volume",
-			            data: a.series[h].volumes,
+			            data: a.series[h].volume,
 			            yAxis: 1
 			        }, {
 			            name: "MACD(12,26,9)",

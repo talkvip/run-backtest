@@ -30,7 +30,9 @@ function fetchRecords(a, b, c, d, e) {
     var h = a;
     h == PLATFORM_BITVC && (h = PLATFORM_HUOBI);
     var i = "//getticker.sinaapp.com/fetch/" + h + "/" + b.toLowerCase() + "/" + e + "/" + c.replace(/[\-\/\s:]/g, "") + "/" + d.replace(/[\-\/\s:]/g, "") + "/kline.json";
-    return "undefined" != typeof recordsCache[i] ? (recordsMap[g] = recordsCache[i], __count++, void(__count == __pairs.length && __finishCallBack(backtest_do(__startTime, __endTime, __period, __pairs, __script)))) : void atomic.get(i).success(function(a, b) {
+    return "undefined" != typeof recordsCache[i] ? (recordsMap[g] = recordsCache[i], __count++, console.log(recordsMap[g]), void(__count == __pairs.length && __finishCallBack(backtest_do(__startTime, __endTime, __period, __pairs, __script)))) : void atomic.get(i).success(function(a, b) {
+        console.log(a);
+        console.log(b);
         if ("string" == typeof a) return void f(a, b);
         for (var c = [], d = 0; d < a.length; d++) {
             var e = a[d],
@@ -181,7 +183,7 @@ function backtest_do(startTime, endTime, period, pairs, script) {
         function f() {
             return timeLine + timeOffset
         }
-
+        //返回偏移底标
         function g() {
             for (var a = f(), b = l; b < u.length; b++)
                 if (u[b].Time + x > a) return l = b, b;
@@ -202,11 +204,11 @@ function backtest_do(startTime, endTime, period, pairs, script) {
         }
 
         function i(a) {
-            var b = (Math.max(f(), a.Time) - a.Time) / x,
+            var b = (Math.max(f(), a.Time) - a.Time) / x,//x为选择的时间段 秒数*1000
                 c = (a.High + a.Low) / 2;
             return fixedFloat(.25 >= b ? a.Open + (a.High - a.Open) * (b / .25) : .5 >= b ? a.High - (a.High - c) * ((b - .25) / .25) : .75 >= b ? c - (c - a.Low) * ((b - .5) / .25) : .95 >= b ? a.Low + (a.Close - a.Low) * ((b - .75) / .2) : a.Close)
         }
-
+        //得到交易历史价格
         function j() {
             return i(u[g()])
         }
@@ -589,18 +591,18 @@ function backtest_do(startTime, endTime, period, pairs, script) {
                 }
             }
         };
-        var l = 0,
-            m = [],
-            n = 10,
-            o = "",
-            p = "A",
+        var l = 0,//?
+            m = [],//GetPosition
+            n = 10,//SetMarginLevel
+            o = "",//SetDirection
+            p = "A",//SetContractType
             q = 0,
             r = [],
-            s = [],
-            t = "" + a + b,
-            u = recordsMap[t],
-            v = [],
-            w = [],
+            s = [],//?
+            t = "" + a + b,//platformId+coinType
+            u = recordsMap[t],//例0BTC中数据 Array
+            v = [],//ohlc
+            w = [],//volumes
             x = 60 * [1, 3, 5, 15, 30, 60, 120, 240, 360, 720, 1440, 180, 420][period] * 1e3;
         for (var y in u) v.push([u[y].Time, u[y].Open, u[y].High, u[y].Low, u[y].Close]), w.push([u[y].Time, u[y].Volume]);
         series[a + "_" + b] = {
@@ -611,8 +613,8 @@ function backtest_do(startTime, endTime, period, pairs, script) {
             ohlc: v,
             volumes: w
         };
-        var z = 6.1405,
-            A = 7.7983,
+        var z = 6.1405,//GetUSDCNY
+            A = 7.7983,//GetEURCNY
             B = k[a],
             C = {};
         return C.newRate = 0, C.rawRate = 8 == a || a >= 20 ? z : 1, C.Account = {
@@ -676,7 +678,7 @@ function backtest_do(startTime, endTime, period, pairs, script) {
         }, C.GetTrades = function() {
             return delay(), [{
                 Id: 0,
-                Time: f(),
+                Time: f(),//return timeLine + timeOffset
                 Amount: 10,
                 Price: j(),
                 Type: ORDER_TYPE_BUY
@@ -910,8 +912,8 @@ function backtest_do(startTime, endTime, period, pairs, script) {
     };
     var startTimeInt = new Date(startTime).getTime(),
         endTimeInt = new Date(endTime).getTime(),
-        ts = 0,
-        te = 0;
+        ts = 0,//api获取的开始时间
+        te = 0;//api获取的结束时间
     for (k in recordsMap) {
         if (0 == recordsMap[k].length) return {
             series: [],
@@ -933,8 +935,8 @@ function backtest_do(startTime, endTime, period, pairs, script) {
         profit_logs = [],
         exchanges = [],
         timeLine = ts,
-        timeOffset = 0,
-        maxOffset = te - ts,
+        timeOffset = 0,//时间偏移
+        maxOffset = te - ts,//最大偏移量
         lastErrorMsg = "",
         logsCounter = 0,
         _globalVal = {},

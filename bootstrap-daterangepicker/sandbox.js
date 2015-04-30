@@ -208,7 +208,7 @@ function backtest_do(startTime, endTime, period, pairs, script) {
                 c = (a.High + a.Low) / 2;
             return fixedFloat(.25 >= b ? a.Open + (a.High - a.Open) * (b / .25) : .5 >= b ? a.High - (a.High - c) * ((b - .25) / .25) : .75 >= b ? c - (c - a.Low) * ((b - .5) / .25) : .95 >= b ? a.Low + (a.Close - a.Low) * ((b - .75) / .2) : a.Close)
         }
-        //得到交易历史价格
+        //得到交易(历史)价格
         function j() {
             return i(u[g()])
         }
@@ -693,7 +693,7 @@ function backtest_do(startTime, endTime, period, pairs, script) {
             }
         }, C.GetRecords = function() {
             if (delay(), timeLine + timeOffset < u[0].Time) return [];
-            var a = g(),
+            var a = g(),//偏移底标
                 b = a + 1;
             a = b > 1e3 ? b - 1e3 : 0;
             var c = clone(u.slice(a, b));

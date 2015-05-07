@@ -3,16 +3,16 @@
    <head>
       <meta charset="UTF-8" />
       <title>A date range picker for Bootstrap</title>
-      <link href="bootstrap.css" rel="stylesheet">
+      <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
       <!-- <link href="http://netdna.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet"> -->
-      <link rel="stylesheet" type="text/css" media="all" href="daterangepicker-bs2.css" />
-      <script type="text/javascript" src="jquery.js"></script>
-      <!-- <script type="text/javascript" src="bootstrap.js"></script> -->
-      <script type="text/javascript" src="moment.js"></script>
-      <script type="text/javascript" src="daterangepicker.js"></script>
-      <script type="text/javascript" src="highstock.js"></script>
-      <script type="text/javascript" src="sandbox.js"></script>
-      <!-- <script type="text/javascript" src="highcharts-more.js"></script> -->
+      <link rel="stylesheet" type="text/css" media="all" href="bootstrap-daterangepicker/daterangepicker-bs2.css" />
+      <script type="text/javascript" src="bootstrap/jquery.js"></script>
+      <!-- <script type="text/javascript" src="bootstrap/js/bootstrap.js"></script> -->
+      <script type="text/javascript" src="bootstrap-daterangepicker/moment.js"></script>
+      <script type="text/javascript" src="bootstrap-daterangepicker/daterangepicker.js"></script>
+      <script type="text/javascript" src="Highstock/js/highstock.js"></script>
+      <script type="text/javascript" src="botvs/sandbox.js"></script>
+      <!-- <script type="text/javascript" src="Highstock/js/highcharts-more.js"></script> -->
 
       <link rel="stylesheet" href="codemirror/lib/codemirror.css">
 	<link rel="stylesheet" href="codemirror/theme/eclipse.css">
@@ -71,19 +71,19 @@
             <select id="platform" class="form-control">
 	            <option value="0" selected="selected" label="火币网">火币网</option>
 	            <option value="1" label="OKCoin">OKCoin</option>
-<!-- 	            <option value="2" label="BTCChina">BTCChina</option>
-<option value="3" label="云币网">云币网</option>
-<option value="4" label="中国比特币">中国比特币</option>
-<option value="5" label="比特币交易网">比特币交易网</option>
-<option value="6" label="BTC100">BTC100</option>
-<option value="7" label="BitVC">BitVC</option>
-<option value="8" label="796期货">796期货</option>
-<option value="9" label="BitVC期货">BitVC期货</option>
-<option value="10" label="OKCoin期货">OKCoin期货</option>
-<option value="11" label="BTC-E">BTC-E</option>
-<option value="12" label="Bitstamp">Bitstamp</option>
-<option value="13" label="Bitfinex">Bitfinex</option>
-<option value="14" label="OKCoin国际站">OKCoin国际站</option> -->
+			<!--<option value="2" label="BTCChina">BTCChina</option>
+				<option value="3" label="云币网">云币网</option>
+				<option value="4" label="中国比特币">中国比特币</option>
+				<option value="5" label="比特币交易网">比特币交易网</option>
+				<option value="6" label="BTC100">BTC100</option>
+				<option value="7" label="BitVC">BitVC</option>
+				<option value="8" label="796期货">796期货</option>
+				<option value="9" label="BitVC期货">BitVC期货</option>
+				<option value="10" label="OKCoin期货">OKCoin期货</option>
+				<option value="11" label="BTC-E">BTC-E</option>
+				<option value="12" label="Bitstamp">Bitstamp</option>
+				<option value="13" label="Bitfinex">Bitfinex</option>
+				<option value="14" label="OKCoin国际站">OKCoin国际站</option> -->
             </select>
             <select id="coin" class="form-control">
 	            <option value="0" selected="selected" label="BTC">BTC</option>
@@ -247,7 +247,9 @@ function main() {
 
    $(document).ready(function() {
    	 var daterangeInput = $('input[name="daterange"]');
+   	 //显示目前时刻到上一天当前时刻的时间段
    	 daterangeInput.val(moment().subtract(1, 'days').format('YYYY/MM/DD HH:mm:ss') + ' -> ' + moment().format('YYYY/MM/DD HH:mm:ss'));
+   	 //初始化daterangepicker
      daterangeInput.daterangepicker({
        timePicker: true,
        format: 'YYYY/MM/DD HH:mm:ss',
@@ -273,7 +275,7 @@ function main() {
                firstDay: 1
              }
      });
-
+     //点击回测按钮事件
      $('#runBackbtn').click(function(){
 			var tstBtn = $(this),
 				dateArr = $('#daterangeInput').val().split(' -> '),
@@ -283,9 +285,12 @@ function main() {
 				script = editor.getValue(),//动态获取codemirror的值
 				reNum = $('#reNum').val(),
 				reCoin = $('#reCoin').val(),
-				platformArr = [];
+				platformArr = [];//平台表单二维数组 用于存放多个平台
 			platformArr.push([platformType,coinType,reNum,reCoin]);
+
+			console.log('----------平台表单数组------------');
 			console.log(platformArr);
+			console.log('----------策略javascript脚本------');
 			console.log(script);
 
 			tstBtn.attr("disabled",true);
@@ -295,6 +300,16 @@ function main() {
 		    //console.log(recordsCache);
 		    backtest(dateArr[0], dateArr[1], periodType, platformArr, script, function(a) {
 		        //self.postMessage({progress: 100,ret: a,cache: recordsCache,summary: d})
+
+		        /*{ series:{ 0_BTC:{ period   : __,
+		        					 eid      : __,
+		        					 currency : __,
+		        					 ohlc     : __,
+		        					 volumes  : __},
+		        			 0_LTC:{			  },
+		        			},
+		          }*/
+		        console.log('------------调用botvs网站sandbox.js取得回测数据--------');
 		        console.log(a);
 
 		        var b = 0,//LOG_TYPE_BUY
@@ -343,6 +358,11 @@ function main() {
 
 		        	}
 		        }
+		        /*a.series[h].ohlc
+		        	         .eid
+		        	         .currency
+		        	         .period
+		        	         .volumes*/
 		        for (var h in a.series) {
 			        var type = eid2str(a.series[h].eid) + "_" + a.series[h].currency;
 			        //console.log('1111111111-'+a.series[h].eid);
@@ -453,7 +473,8 @@ function main() {
 				//c.replace(/[\-\/\s:]/g, "") + "/" + d.replace(/[\-\/\s:]/g, "")
 		function fetchURL(_dateArr,_periodType,_platformType,_coinType){
 			var _tickerUrl = "https://getticker.sinaapp.com/fetch/" + _platformType + "/" + _coinType.toLowerCase() + "/" + _periodType + "/" + _dateArr[0].replace(/[\-\/\s:]/g, "") + "/" + _dateArr[1].replace(/[\-\/\s:]/g, "") + "/kline.json";
-			console.log('tickerUrl:'+_tickerUrl);
+			console.log('-------------getticker请求地址------------');
+			console.log(_tickerUrl);
 			return _tickerUrl;
 		}
 
@@ -464,7 +485,8 @@ function main() {
 		      url = _fetchURL.slice(6);
 		  $.getJSON(_fetchURL,function(data,status){
 			if(data){
-				console.log("data typeof:"+typeof(data));
+				console.log('-------请求返回数据data typeof的类型---------');
+				console.log(typeof(data));
 				// split the data set into ohlc and volume
 			    for (var i = 0; i < data.length; i++) {
 			    	//console.log(typeof(data[i][0]));
@@ -485,6 +507,7 @@ function main() {
 
 
 		//b：平台name c：时间段 d:series
+		//a: "chart_"_h(chart_0_BTC) b: 火币_BTC c: a.series[h].period d: [{}]
 	    function newKChart(a, b, c, d) {
 	    	Highcharts.setOptions({
 	            global: {

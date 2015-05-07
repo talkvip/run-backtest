@@ -20,7 +20,7 @@ function clone(a) {
     }
     return a
 }
-
+//a: platformType b: coinType c: startTime d: endTime e: period
 function fetchRecords(a, b, c, d, e) {
     function f() {
         __count++, recordsMap[g] = [], __count == __pairs.length && __finishCallBack(backtest_do(__startTime, __endTime, __period, __pairs, __script))
@@ -30,8 +30,12 @@ function fetchRecords(a, b, c, d, e) {
     var h = a;
     h == PLATFORM_BITVC && (h = PLATFORM_HUOBI);
     var i = "//getticker.sinaapp.com/fetch/" + h + "/" + b.toLowerCase() + "/" + e + "/" + c.replace(/[\-\/\s:]/g, "") + "/" + d.replace(/[\-\/\s:]/g, "") + "/kline.json";
-    return "undefined" != typeof recordsCache[i] ? (recordsMap[g] = recordsCache[i], __count++, console.log(recordsMap[g]), void(__count == __pairs.length && __finishCallBack(backtest_do(__startTime, __endTime, __period, __pairs, __script)))) : void atomic.get(i).success(function(a, b) {
+    return "undefined" != typeof recordsCache[i] ? (recordsMap[g] = recordsCache[i], __count++,
+        console.log('-----类型'+g+'的recordsMap-----'), 
+        console.log(recordsMap[g]), void(__count == __pairs.length && __finishCallBack(backtest_do(__startTime, __endTime, __period, __pairs, __script)))) : void atomic.get(i).success(function(a, b) {
+        console.log('-------');
         console.log(a);
+        console.log('--------');
         console.log(b);
         if ("string" == typeof a) return void f(a, b);
         for (var c = [], d = 0; d < a.length; d++) {
@@ -69,7 +73,7 @@ function backtest_do(startTime, endTime, period, pairs, script) {
     function now() {
         return new Date(timeLine + timeOffset)
     }
-
+    //a: log_type b: platform_id c: order_id d: price e: amount f: extra
     function __log(a, b, c, d, e, f) {
         f.length > 0 && "@" === f[f.length - 1] && (f = f.substring(0, f.length - 1) + " (推送成功) #0000ff"), (isEnableLog || a != LOG_TYPE_BUY && a != LOG_TYPE_SELL && a != LOG_TYPE_CANCEL) && (logs.push({
             id: logsCounter + 1,
@@ -174,7 +178,7 @@ function backtest_do(startTime, endTime, period, pairs, script) {
             "undefined" == typeof a && (a = "undefined"), __log(LOG_TYPE_ERROR, -1, -1, 0, 0, a.toString()), lastErrorMsg = a.toString(), a.stack && (console.log("\nStacktrace:"), console.log("===================="), console.log(a.stack))
         } catch (b) {}
     }
-
+    //a: platformId b: coinType c: 余额 d: 余币
     function newExchange(a, b, c, d) {
         function e(b) {
             __log(LOG_TYPE_ERROR, a, -1, 0, 0, b), lastErrorMsg = b
@@ -971,7 +975,7 @@ function backtest_do(startTime, endTime, period, pairs, script) {
         profit_logs: profit_logs
     }
 }
-
+//a: sTime b: eTime c: period d: paris e: script f,g: 回调function g: recordsCache
 function backtest(a, b, c, d, e, f, g, h) {
     a = a.replace(/\-/g, "/"), b = b.replace(/\-/g, "/"), __startTime = a, __endTime = b, __period = c, __pairs = d, __script = e, __finishCallBack = f, __progressCallBack = g, __count = 0, __usedMap = {}, recordsMap = {}, "undefined" != typeof h && (recordsCache = h);
     for (var i = 0; i < d.length; i++) fetchRecords(d[i][0], d[i][1], a, b, c)
